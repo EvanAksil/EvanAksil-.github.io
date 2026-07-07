@@ -1,0 +1,140 @@
+/* VARIABLES DE COULEURS (Sobres et épurées) */
+:root {
+    --bg-white: #ffffff;
+    --text-main: #222222;
+    --text-light: #555555;
+    --sidebar-bg: #f8f9fa; /* Gris très clair, évite le vert de Troesch */
+    --border-color: #e0e0e0;
+    --accent-color: #1a4a76; /* Un bleu académique très sobre */
+}
+
+/* BASE */
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--bg-white);
+    color: var(--text-main);
+}
+
+/* TYPOGRAPHIE */
+.content {
+    font-family: "Georgia", "Palatino", serif; /* Style académique / LaTeX */
+    line-height: 1.6;
+}
+.sidebar {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; /* Style moderne pour l'interface */
+}
+
+/* MENU LATÉRAL (Style Troesch modernisé) */
+.sidebar {
+    width: 250px;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 2rem 1rem;
+}
+
+.profile h1 {
+    font-size: 1.2rem;
+    margin: 0 0 5px 0;
+    color: var(--accent-color);
+}
+
+.profile .subtitle {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.nav-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-links li {
+    margin-bottom: 0.5rem;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-main);
+    display: block;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.nav-links a:hover {
+    background-color: var(--border-color);
+    color: var(--accent-color);
+}
+
+/* CONTENU PRINCIPAL (Style Bertault) */
+.content {
+    margin-left: 280px; /* Laisse la place au menu fixe */
+    padding: 3rem 4rem;
+    max-width: 900px;
+    width: 100%;
+}
+
+.content h2 {
+    color: var(--accent-color);
+    font-size: 1.8rem;
+    border-bottom: 2px solid var(--accent-color);
+    padding-bottom: 10px;
+    margin-top: 3rem;
+    margin-bottom: 2rem;
+}
+
+/* LES BLOCS DE CONTENU (Le mix des deux styles) */
+.block {
+    background-color: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: 6px; /* Coins légèrement arrondis */
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02); /* Ombre ultra discrète */
+}
+
+.block h3 {
+    margin-top: 0;
+    font-size: 1.2rem;
+    color: var(--text-main);
+}
+
+/* LISTES DE DOCUMENTS */
+.doc-list {
+    list-style: none;
+    padding: 0;
+}
+
+.doc-list li {
+    margin-bottom: 8px;
+    padding-left: 20px;
+    position: relative;
+}
+
+/* Petite flèche personnalisée devant les liens */
+.doc-list li::before {
+    content: "›";
+    position: absolute;
+    left: 0;
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+.doc-list a {
+    color: #0366d6;
+    text-decoration: none;
+}
+
+.doc-list a:hover {
+    text-decoration: underline;
+}
