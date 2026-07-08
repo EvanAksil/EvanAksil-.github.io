@@ -3,26 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mathématiques - M. [Ton Nom]</title>
+    <title>Mathématiques - M. AKSIL</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <!-- MENU LATÉRAL -->
     <nav class="sidebar">
         <div class="profile">
-            <h1>M. [Ton Nom]</h1>
+            <h1>Evan AKSIL</h1>
             <p class="subtitle">Professeur agrégé de mathématiques</p>
         </div>
         
         <ul class="nav-links">
             <li><a href="#accueil">Accueil</a></li>
+            
+            <li class="menu-header">ESPACE ÉLÈVES</li>
             <li><a href="#terminale">Terminale (Spécialité)</a></li>
             <li><a href="#seconde">Seconde</a></li>
+            
+            <li class="menu-header">ESPACE PERSONNEL</li>
+            <li><a href="#agregation">Agrégation (Plans & Dév.)</a></li>
+            <li><a href="#cv">Curriculum Vitae</a></li>
+            <li><a href="#projets">Projets & Recherche</a></li>
         </ul>
     </nav>
 
+    <!-- CONTENU PRINCIPAL -->
     <main class="content">
         
+        <!-- SECTION ACCUEIL -->
         <section id="accueil">
             <h2>Bienvenue</h2>
             <div class="block">
@@ -31,6 +41,7 @@
             </div>
         </section>
 
+        <!-- SECTION TERMINALE -->
         <section id="terminale">
             <h2>Terminale Spécialité Mathématiques</h2>
             
@@ -59,6 +70,7 @@
             </div>
         </section>
 
+        <!-- SECTION SECONDE -->
         <section id="seconde">
             <h2>Seconde</h2>
             
@@ -68,6 +80,74 @@
                     <li><a href="#">Cours complet</a></li>
                     <li><a href="#">Fiche d'exercices : Manipuler les fractions</a></li>
                 </ul>
+            </div>
+        </section>
+
+        <!-- SECTION AGRÉGATION -->
+        <section id="agregation">
+            <h2>Agrégation de Mathématiques</h2>
+            <div class="block">
+                <p>Retrouvez ici les documents, plans et développements rédigés lors de mon année de préparation à l'agrégation externe.</p>
+            </div>
+            
+            <div class="block">
+                <h3>Plans de leçons</h3>
+                <ul class="doc-list">
+                    <li><a href="#">Leçon 101 : Groupes opérant sur un ensemble...</a></li>
+                    <li><a href="#">Leçon 121 : Nombres premiers, applications...</a></li>
+                </ul>
+            </div>
+
+            <div class="block">
+                <h3>Développements</h3>
+                <ul class="doc-list">
+                    <li><a href="#">Théorèmes de Sylow</a></li>
+                    <li><a href="#">Théorème d'inversion locale</a></li>
+                    <li><a href="#">Loi de réciprocité quadratique</a></li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SECTION CV -->
+        <section id="cv">
+            <h2>Curriculum Vitae</h2>
+            
+            <div class="block">
+                <h3>Formation</h3>
+                <ul class="doc-list">
+                    <li><strong>Agrégation externe de mathématiques</strong> (2026)</li>
+                    <li><strong>Master Mathématiques et Applications</strong> - Sorbonne Université</li>
+                </ul>
+            </div>
+
+            <div class="block">
+                <h3>Expériences</h3>
+                <ul class="doc-list">
+                    <li><strong>Stagiaire de recherche</strong> - ISIR, Sorbonne Université (Avril - Sept. 2026)</li>
+                    <li><strong>Tuteur en mathématiques</strong> - Accompagnement d'étudiants (L1) et d'élèves (Collège/Lycée)</li>
+                </ul>
+            </div>
+
+            <div class="block">
+                <p>Pour plus de détails, vous pouvez consulter mon parcours complet :</p>
+                <ul class="doc-list">
+                    <li><a href="chemin/vers/ton_cv.pdf">📥 Télécharger mon CV (PDF)</a></li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SECTION PROJETS -->
+        <section id="projets">
+            <h2>Projets & Recherche</h2>
+            
+            <div class="block">
+                <h3>Recherche en Deep Learning & Vision</h3>
+                <p>Travaux portant sur les Vision-Language Models (VLM), la détection d'anomalies et la quantification d'incertitude. Expérimentations menées sur des bases de données spécifiques (ex: CholecT45) et implication dans le framework I-FailSense.</p>
+            </div>
+
+            <div class="block">
+                <h3>Espace Pédagogique (Ce site)</h3>
+                <p>Création d'une plateforme web statique hébergée sur GitHub Pages, pensée pour centraliser des ressources pédagogiques et des documents mathématiques (LaTeX) avec une architecture légère et rapide.</p>
             </div>
         </section>
 
