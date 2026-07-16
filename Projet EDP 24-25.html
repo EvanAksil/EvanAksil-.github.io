@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Analyse du maillage et formulation variationnelle</title>
+<style>
+body { font-family: sans-serif; line-height: 1.6; margin: 20px; }
+h1 { color: #333; text-align: center;}
+h2 { color: #555; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
+h3 { color: #444; }
+code { background-color: #f4f4f4; padding: 2px 5px; border-radius: 3px; font-family: monospace; }
+pre { background-color: #f8f9fa; padding: 15px; border-radius: 5px; border: 1px solid #ddd; overflow-x: auto; font-family: 'Courier New', Courier, monospace; font-size: 14px; line-height: 1.4; }
+.math { font-family: "Times New Roman", Times, serif; font-style: italic; font-size: 1.1em; }
+</style>
+</head>
+<body>
+
+<h1>Analyse du maillage et formulation variationnelle</h1>
+
+<p>Ce document présente une analyse d'un problème mathématique impliquant la manipulation de maillages et la résolution d'une équation aux dérivées partielles via une formulation variationnelle.</p>
+
+<h2>Exercice 1 : Opérations sur le maillage</h2>
+
+<p>La première partie de l'exercice se concentre sur la création et la manipulation d'un maillage.</p>
+
+<h3>Génération du maillage</h3>
+<p>Le code suivant génère un maillage régulier composé de quadrilatères divisés en triangles :</p>
+<pre><code>import numpy as np
+from numpy import linalg as line
+import matplotlib.pyplot as plt
+import matplotlib.tri as tri
+import sympy as sp
+from scipy.sparse import coo_matrix
+
+def generateMesh(N):
+    x   = np.linspace(0, 2*np.pi, N)
+    y   = np.linspace(0, 2*np.pi, N)
+    Vtx = [(xi, yi) for yi in y for xi in x]
+    Elt = []
+    for i in range(N-1):
+        for j in range(N-1):                # Quadrilatères à diviser en triangles
+            Elt.append([i*N + j, ((i+1)*N) + j + 1, ((i+1)*N) + j])
+            Elt.append([i*N + j, i*N + j+1, ((i+1)*N) + j + 1])
+    return (Elt,Vtx)</code></pre>
+
+<h3>Filtrage du maillage</h3>
+<p>Ensuite, une fonction filtre le maillage en conservant uniquement les nœuds et les triangles situés en dehors d'une zone centrale définie par les coordonnées <span class="math">(\frac{\pi}{2}, \frac{3\pi}{2})</span> :</p>
+<pre><code>def Filtre_(elt,vtx):
+    vtx_in        = []
+    vtx_out       = []
+    indicevtx_out = []
+    indicevtx_in  = []
+    elt_in        = []
+    
+    # On filtre les noeuds qui seront conservés en étudiant leurs coordonées
+    for i in range(0,len(vtx)):
+        if (vtx[i][0] > np.pi/2 and vtx[i][0] < 3*np.pi/2) and (vtx[i][1] < 3*np.pi/2 and vtx[i][1] > np.pi/2):
+            vtx_out.append(vtx[i])
+            indicevtx_out.append(i)
+        else:
+            vtx_in.append(vtx[i])
+            indicevtx_in.append(i)
+            
+    # On filtre les triangles qui seront conservés en étudiant les coordonées de leurs barycentres et les milieux de leurs cotés.
+    for e in elt:
+        t = 0
+        k = 0
+        
+        milieu_1 = [ (vtx[e[1]][0] + vtx[e[0]][0] )/2 , (vtx[e[1]][1] + vtx[e[0]][1] )/2 ]
+        milieu_2 = [ (vtx[e[1]][0] + vtx[e[2]][0] )/2 , (vtx[e[1]][1] + vtx[e[2]][1] )/2 ]
+        milieu_3 = [ (vtx[e[2]][0] + vtx[e[0]][0] )/2 , (vtx[e[2]][1] + vtx[e[0]][1] )/2 ]
+        
+        if (milieu_1[0] > np.pi/2 and milieu_1[0] < 3*np.pi/2) and (milieu_1[1] < 3*np.pi/2 and milieu_1[1] > np.pi/2):
+            t = 1
+        if (milieu_2[0] > np.pi/2 and milieu_2[0] < 3*np.pi/2) and (milieu_2[1] < 3*np.pi/2 and milieu_2[1] > np.pi/2):
+            t = 1
+        if (milieu_3[0] > np.pi/2 and milieu_3[0] < 3*np.pi/2) and (milieu_3[1] < 3*np.pi/2 and milieu_3[1] > np.pi/2):
+            t = 1
+            
+        pts = [vtx[e[0]],vtx[e[1]],vtx[e[2]]]
+        xc = np.mean([pts[0][0],pts[1][0],pts[2][0]])
+        yc = np.mean([pts[0][1],pts[1][1],pts[2][1]])
+        if np.pi/2 < xc < 3*np.pi/2 and np.pi/2 < yc < 3*np.pi/2:
+              t = 1
+        
+        elt = np.array(elt)
+        
+        for i in range(0,3):
+            if (vtx[e[i]] not in vtx_in) or (t == 1 ):
+                k=1
+        
+        # les triangles conservés sont ceux pour lesquels k==0
+        # parmis les triangles conservés on réorganise leur numérotation
+        if k==0:
+            l = []
+            for i in range(0,3):
+                for j in range(0,len(vtx_in)):
+                    if vtx[e[i]] == vtx_in[j]:
+                        l.append(j)
+            elt_in.append(l)
+           
+    return (elt_in,vtx_in)</code></pre>
+
+<h3>Affichage du maillage</h3>
+<p>Le maillage filtré est ensuite tracé à l'aide de matplotlib, en utilisant la fonction <code>triplot</code> pour visualiser les triangles :</p>
+<pre><code>def PlotMesh(vtx,elt):
+    x      = [vtx[i][0] for i in range(len(vtx))]
+    y      = [vtx[i][1] for i in range(len(vtx))]
+    for i in range (0,len(elt)):
+        i1 = elt[i][0]
+        i2 = elt[i][1]
+        i3 = elt[i][2]
+        plt.triplot((vtx[i1][0],vtx[i2][0],vtx[i3][0]),(vtx[i1][1],vtx[i2][1],vtx[i3][1]))
+        
+    triang = tri.Triangulation(x, y, elt)
+    return(triang)</code></pre>
+
+<h3>Calcul des vecteurs normaux au bord</h3>
+<p>La dernière étape de l'exercice 1 consiste à déterminer les vecteurs normaux au bord du maillage, qui seront utiles pour la formulation variationnelle. La fonction <code>PlotMesh_normal</code> trace les triangles et ajoute des flèches (<code>quiver</code>) représentant les normales au bord.</p>
+<pre><code>def PlotMesh_normal(vtx,elt):
+    x = [vtx[i][0] for i in range(len(vtx))]
+    y = [vtx[i][1] for i in range(len(vtx))]
+    for i in range (0,len(elt)):
+        i1 = elt[i][0]
+        i2 = elt[i][1]
+        i3 = elt[i][2]
+        plt.triplot((vtx[i1][0],vtx[i2][0],vtx[i3][0]),(vtx[i1][1],vtx[i2][1],vtx[i3][1]))
+        
+    triang = tri.Triangulation(x, y, elt)
+    
+    M = 0
+    compt=0
+    i = 0
+    while compt != 1:
+        compt = 0
+        for e in elt:
+            if i in e:
+                compt = compt+1
+        M = M + 1
+        i = i +1
+    
+    # On etudie chaque noeuds
+    for i in range(0,len(vtx)):
+        compt = 0
+        for e in elt:
+            if i in e:
+                compt = compt + 1
+            
+        # Les points du bord (hors coins) sont dans exactement 3 triangles    
+        if compt == 3:
+            k1 = 0
+            k2 = 0
+            k3 = 0
+            k4 = 0
+            for e in elt:
+                if (i in e) and (i+1 not in e):
+                    k1 = k1 + 1
+                if (i in e) and (i-1 not in e):
+                    k2 = k2 + 1
+                if (i in e) and (i-M in e):
+                    k3 = k3 + 1
+                if (i in e) and (i+M in e):
+                    k4 = k4 + 1
+
+            if k1 == 3 :
+                plt.quiver(vtx[i][0],vtx[i][1],1,0)
+            if k2 == 3 :
+                plt.quiver(vtx[i][0],vtx[i][1],-1,0)
+            if k3 == 0 and k1 != 3 and k2 != 3 :
+                plt.quiver(vtx[i][0],vtx[i][1],0,-1)
+            if k4 == 0 and k1 != 3 and k2 != 3 :
+                plt.quiver(vtx[i][0],vtx[i][1],0,1)
+    
+    return(triang)</code></pre>
+
+<h2>Exercice 2 : Formulation variationnelle</h2>
+
+<p>Cette section aborde la résolution d'une équation aux dérivées partielles via une formulation variationnelle.</p>
+
+<h3>Formulation mathématique</h3>
+<p>La formulation variationnelle du problème est donnée par :</p>
+<p class="math">a(u, v) = ∫<sub>Ω</sub> ∇u ⋅ ∇v dx + μ ∫<sub>Ω</sub> uv dx = ∫<sub>Ω</sub> fv dx + ∫<sub>Γ<sub>N</sub></sub> ∂<sub>n</sub>u<sub>ex</sub> ⋅ v ds = l(v)</p>
+
+<h3>Assemblage des matrices</h3>
+<p>Pour résoudre numériquement le problème, nous devons assembler la matrice de rigidité et la matrice de masse. Les fonctions <code>Kloc</code> et <code>Mloc</code> calculent les matrices élémentaires pour un triangle donné, puis les fonctions <code>Rig</code> et <code>Mass</code> assemblent les matrices globales.</p>
+<pre><code>def Mloc(vtx,e):
+    if len(e) == 3 :
+        coord_a_x = vtx[e[0]][0]
+        coord_a_y = vtx[e[0]][1]
+        coord_b_x = vtx[e[1]][0]
+        coord_b_y = vtx[e[1]][1]
+        coord_c_x = vtx[e[2]][0]
+        coord_c_y = vtx[e[2]][1]
+        long_ab   = np.sqrt( (coord_b_x - coord_a_x)**2 + (coord_b_y - coord_a_y)**2)
+        long_ac   = np.sqrt( (coord_c_x - coord_a_x)**2 + (coord_c_y - coord_a_y)**2)
+        long_bc   = np.sqrt( (coord_b_x - coord_c_x)**2 + (coord_b_y - coord_c_y)**2)
+
+        AB        = [coord_b_x-coord_a_x,coord_b_y-coord_a_y]
+        AC        = [coord_c_x-coord_a_x,coord_c_y-coord_a_y]
+        aire      = np.abs(AB[0]*AC[1] - AB[1]*AC[0])/2
+        m         = np.array([[2,1,1],[1,2,1],[1,1,2]])
+        
+        return  m*aire/12 
+
+def Mass(vtx,elt):
+    ligne   = []
+    colonne = []
+    valeur  = []
+
+    for e in elt:
+        mloc = Mloc(vtx,e)            
+        for i in range(0,3):
+            for j in range(0,3):
+                ligne.append(e[i])
+                colonne.append(e[j])
+                valeur.append(mloc[i][j])
+                
+    n = len(vtx)
+    M = coo_matrix((valeur, (ligne, colonne)), shape=(n, n))
+    return M
+
+def in_Omega_top(vtx,e):
+    return np.min([vtx[e[i]][1] for i in range(3)]) >= np.pi
+
+def Mass_top(vtx, elt):
+    ligne   = []
+    colonne = []
+    valeur  = []
+     
+    for e in elt:
+        if in_Omega_top(vtx,e) :
+            mloc = Mloc(vtx,e)            
+            for i in range(0,3):
+                for j in range(0,3):
+                    ligne.append(e[i])
+                    colonne.append(e[j])
+                    valeur.append(mloc[i][j])
+            
+    n = len(vtx)
+    M = coo_matrix((valeur, (ligne, colonne)), shape=(n, n))
+    return M
+
+def Kloc(vtx, e):
+    coord_a_x = vtx[e[0]][0]
+    coord_a_y = vtx[e[0]][1]
+    coord_b_x = vtx[e[1]][0]
+    coord_b_y = vtx[e[1]][1]
+    coord_c_x = vtx[e[2]][0]
+    coord_c_y = vtx[e[2]][1]
+    AB        = [coord_b_x-coord_a_x,coord_b_y-coord_a_y]
+    AC        = [coord_c_x-coord_a_x,coord_c_y-coord_a_y]
+    BC        = [coord_c_x-coord_b_x,coord_c_y-coord_b_y]
+    aire      = np.abs(AB[0]*AC[1] - AB[1]*AC[0])/2 
+    B = np.array([[coord_c_x-coord_b_x,coord_a_x-coord_c_x,coord_b_x-coord_a_x],[coord_c_y-coord_b_y,coord_a_y-coord_c_y,coord_b_y-coord_a_y]])
+    return B.T @ B /(4*aire)
+
+def Rig(vtx,elt):
+    ligne   = []
+    colonne = []
+    valeur  = []
+     
+    if len(elt[0]) == 3:
+        for e in elt:         
+            kloc = Kloc(vtx,e)
+            for i in range(0,3):
+                for j in range(0,3):
+                    ligne.append(e[i])
+                    colonne.append(e[j])
+                    valeur.append(kloc[i][j])
+
+    n = len(vtx)
+    M = coo_matrix((valeur, (ligne, colonne)), shape=(n, n))
+    return M
+
+def A(vtx,elt):
+    return (Rig(vtx,elt) + Mass(vtx,elt)+Mass_sparse_r(vtx, elt))</code></pre>
+
+<h3>Calcul du second membre et des conditions aux limites</h3>
+<p>Le terme source et le terme de bord Neumann sont calculés grâce aux fonctions suivantes :</p>
+<pre><code>def grad_uex(x, y, p, q):
+    return np.array([2 * p * np.cos(2 * p * x) * np.sin(2 * q * y), 2 * q * np.sin(2 * p * x) * np.cos(2 * q * y)])
+
+def deriv_normal(x, y, normal_vec, p, q):
+    grad = grad_uex(x, y, p, q)
+    return np.dot(grad, normal_vec)
+
+def List_Vect_Norm(vtx, elt):
+    e1 = np.array([1,0])
+    e2 = np.array([0,1])
+    mat = np.zeros((len(elt),2))
+    
+    for i in range(len(elt)):
+        bord = elt[i]
+        x0, y0 = vtx[bord[0]][0], vtx[bord[0]][1]
+        x1, y1 = vtx[bord[1]][0], vtx[bord[1]][1]
+        if x1==x0:
+            if x1 == 0 or x1 == 2*np.pi:
+                mat[i] = e1*(-1)**((x1==0))
+            if x1 < np.pi and x1 != 0:
+                mat[i]  = 0
+            if x1 > np.pi and x1 != 2*np.pi:
+                mat[i] = 0
+        else :
+            if y1 == 0 or y1 == 2*np.pi: 
+                mat[i] = e2*(-1)**((y1==0))
+            if y1 < np.pi and y1 != 0:
+                mat[i]  = 0
+            if y1 > np.pi and y1 != 2*np.pi:
+                mat[i] = 0
+    return mat
+
+def Boundary(elt):
+    b = []
+    for i in range(0,len(elt)):
+        tr = elt[i]
+        for j in range(0,3):
+            f = []
+            for k in range(0,3):
+                if k != j:
+                    f.append(tr[k])
+                    f.sort()
+            if f in b :
+                b.remove(f)
+            else :
+                b.append(f)
+    return b
+
+def Approx_Integrale_bord(vtx, elt, p,q):
+    n = len(vtx)
+    bord = Boundary(elt)
+    b_neumann = np.zeros(n)
+    vect_norm = List_Vect_Norm(vtx, bord)
+    k = 0
+    for (i, j) in bord:
+        x1 = vtx[i][0]
+        y1 = vtx[i][1]
+        x2 = vtx[j][0]
+        y2 = vtx[j][1]
+        
+        xm, ym = (x1 + x2) / 2, (y1 + y2) / 2
+        long = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+        
+        normal = vect_norm[k] 
+        k = k+1
+        g_val = deriv_normal(xm, ym,normal,p,q)
+        contrib = g_val * long / 2
+
+        b_neumann[i] += contrib
+        b_neumann[j] += contrib
+        
+    return b_neumann.reshape(n,1)
+
+def Fh(vtx, elt, p, q):
+    n = len(vtx)
+    F = np.array([(4 * (p**2 + q**2) + mu(x, y)) * np.sin(2 * p * x) * np.sin(2 * q * y) for (x, y) in vtx])
+    M = Mass(vtx, elt)  
+    Fh = M @ F
+    return Fh.reshape(n, 1)</code></pre>
+
+<h3>Résolution du système linéaire</h3>
+<p>La fonction <code>U</code> assemble le système (en tenant compte des conditions aux limites) et le résout pour obtenir la solution approchée.</p>
+<pre><code>def U(vtx,elt,p,q):
+    b    = Fh(vtx,elt,p,q) + Approx_Integrale_bord(vtx, elt, p,q)
+    
+    n    = len(vtx)
+    P    = np.zeros((n,n))
+    bord = Boundary(elt)
+    V    = np.zeros((n,1))
+    
+    for i in range(0,n):
+        for bo in bord:
+            if (i==bo[0] or i==bo[1]) and ((vtx[bo[0]][0]>0 and vtx[bo[0]][0]<2*np.pi) and (vtx[bo[0]][1]>0 and vtx[bo[0]][1]<2*np.pi)):
+                P[i][i] = 1
+        if((vtx[i][0]<np.pi/2 or vtx[i][0]>3*np.pi/2) or (vtx[i][1]<np.pi/2 or vtx[i][1]>3*np.pi/2)):
+            V[i] = (4 * (p**2 + q**2) + mu(vtx[i][0], vtx[i][1])) * np.sin(2 * p * vtx[i][0]) * np.sin(2 * q * vtx[i][1])
+    
+    D  = P@V
+    I  = np.eye(n)
+    
+    A2 = A(vtx,elt)
+    A_ = P+(I-P)@A2@(I-P)
+    B_ = np.reshape((I-(I-P)@A2)@D,(n,1)) + (I-P)@b
+    return line.solve(A_,B_) </code></pre>
+
+<h2>Exercice 3 : Analyse d'erreur</h2>
+
+<p>L'exercice final évalue la précision de la solution approchée.</p>
+
+<h3>Calcul du Laplacien</h3>
+<p>Le Laplacien de la solution exacte <span class="math">u<sub>ex</sub>(x, y) = sin(2px) sin(2qy)</span> est calculé analytiquement :</p>
+<p class="math">Δu<sub>ex</sub> = -4(p<sup>2</sup> + q<sup>2</sup>) sin(2px) sin(2qy)</p>
+
+<h3>Résolution et visualisation</h3>
+<p>Le problème est résolu sur un maillage fin en utilisant la fonction <code>Resolve</code>. Les fonctions <code>PlotApproximation</code> et <code>PlotApproximation_erreur</code> permettent d'afficher visuellement la solution et l'erreur :</p>
+<pre><code>def Resolve(N,p,q):
+    Elt,Vtx   = generateMesh(N)
+    ELT2,VTX2 = Filtre_(Elt,Vtx)
+    U_        = U(VTX2,ELT2,p,q)
+    return U_
+
+def PlotApproximation(vtx,elt,vh):
+    vh = np.array(vh).flatten()
+    vtx_x = []
+    vtx_y = []
+    for v in vtx:
+        vtx_x.append(v[0])
+        vtx_y.append(v[1])
+        
+    triang = tri.Triangulation(vtx_x, vtx_y, elt)
+    p = plt.tripcolor(PlotMesh(vtx,elt), vh, shading='flat', cmap='jet')
+    plt.colorbar(label="Valeurs")
+    plt.show()
+
+def Interpolation(vtx,p,q):
+    I = []
+    for v in vtx:
+        I.append(np.sin(2*p*v[0])*np.sin(2*q*v[1]))
+    return I
+
+def PlotApproximation_erreur(vtx,elt,vh,p,q):
+    vh = np.array(vh).flatten()
+    I  = Interpolation(vtx,p,q)
+    V  = []
+    for i in range(0,len(vh)):
+        V.append(np.abs(vh[i]-I[i]))
+    PlotApproximation(vtx,elt,V)</code></pre>
+
+<h3>Calcul des erreurs L2 et H1</h3>
+<p>Enfin, les erreurs relatives en normes <span class="math">L<sup>2</sup></span> et <span class="math">H<sup>1</sup></span> sont calculées pour quantifier la convergence de la méthode.</p>
+<pre><code>def erreur_L2(vtx,elt,vh,p,q):
+    vh = np.array(vh).flatten()
+    I  = Interpolation(vtx,p,q)
+    
+    V  = []
+    for i in range(0,len(vh)):
+        V.append(I[i]-vh[i])
+        
+    M       = Mass(vtx, elt)
+    l2_vh_I = np.sqrt((V @ M) @ V)
+    l2_vh   = np.sqrt((vh @ M) @ vh)
+    
+    return l2_vh_I / l2_vh
+
+def erreur_H1(vtx,elt,vh,p,q):
+    vh = np.array(vh).flatten()
+    I = Interpolation(vtx,p,q)
+    V = []
+    for i in range(0,len(vh)):
+        V.append(vh[i]-I[i])
+    
+    M = Mass(vtx, elt)
+    R = Rig(vtx, elt)
+    
+    l2_vh_I      = np.sqrt((V @ M) @ V)
+    grad_l2_vh_I = np.sqrt((V @ R) @ V) 
+    H1_vh_I      =  l2_vh_I + grad_l2_vh_I
+    
+    l2_vh        = np.sqrt((vh @ M) @ vh)
+    grad_l2_vh   = np.sqrt((vh @ R) @ vh) 
+    H1_vh        = l2_vh + grad_l2_vh
+    
+    return H1_vh_I / H1_vh</code></pre>
+
+<p>L'analyse finale de la pente de la courbe d'erreur relative (sur un graphique de type log-log) permet d'estimer l'ordre de convergence.</p>
+
+</body>
+</html>
