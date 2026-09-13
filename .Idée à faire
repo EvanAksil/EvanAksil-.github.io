@@ -2,6 +2,8 @@
 
 2) Faire la biblio !
 
+2.5) Page privé avec un code avec tous les problemes utiles
+
 3) Dév !
 
 4) Comment gerer les différentes années scolzire ?
@@ -11,7 +13,7 @@
 
 6) Notes sur mon apprentissage Theorie de Galois , rédaction d'un papier avec comme grande question : soit P comment determiner 
  efficacement Gal(P/K). Puis utilisation galois en crypto , uttilisation en maroquinerie (Mezard)
-Plan : 1) Fondements , 2) Comment calc grp Galois , 3) Etude de cas (dizaine de polys,sage,python), 4) Soit G groupe y'a t il P tq G soit
+Plan : 1) Fondements , 2) Comment calc grp Galois , 3) Etude de cas (dizaine de polys,sage,python)(Poly Taylor (voir caldero)), 4) Soit G groupe y'a t il P tq G soit
 grp de galois de P ? , 5) Applications (de galois en entier) , 6)Théorie Galois inverse , 7) Théorie Galois diff , 
 ) représentation galoisienne
 
